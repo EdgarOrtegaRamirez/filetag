@@ -10,9 +10,7 @@ from __future__ import annotations
 
 import os
 import re
-import sys
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
 
 # xattr is an optional dependency; we handle ImportError gracefully
 try:
@@ -42,7 +40,7 @@ class TagValidationError(FileTagError):
     """Raised when a tag name is invalid."""
 
 
-class FileNotFoundError_(FileTagError):
+class FileTagNotFoundError(FileTagError):
     """Raised when the target file does not exist."""
 
 
@@ -54,15 +52,14 @@ def _check_xattr() -> None:
     """Verify xattr library is available."""
     if not _HAS_XATTR:
         raise XAttrNotAvailableError(
-            "The 'xattr' library is not installed. "
-            "Install it with: pip install xattr"
+            "The 'xattr' library is not installed. Install it with: pip install xattr"
         )
 
 
 def _check_file(path: Path) -> None:
     """Verify the file exists and is a regular file or directory."""
     if not path.exists():
-        raise FileNotFoundError_(f"Path does not exist: {path}")
+        raise FileTagNotFoundError(f"Path does not exist: {path}")
     if not path.is_file() and not path.is_dir():
         raise FileTagError(f"Path is not a regular file or directory: {path}")
 
@@ -93,7 +90,7 @@ def validate_tag(tag: str) -> str:
     return tag
 
 
-def _read_tags_raw(path: str) -> Optional[str]:
+def _read_tags_raw(path: str) -> str | None:
     """
     Read the raw tag string from xattr.
 
@@ -154,7 +151,7 @@ def _remove_xattr(path: str) -> None:
         raise FileTagError(f"Failed to remove xattr from {path}: {e}") from e
 
 
-def get_tags(path: Path) -> Set[str]:
+def get_tags(path: Path) -> set[str]:
     """
     Get the set of tags for a file.
 
@@ -171,7 +168,7 @@ def get_tags(path: Path) -> Set[str]:
     return {t.strip() for t in raw.split(TAG_SEPARATOR) if t.strip()}
 
 
-def add_tags(path: Path, tags: List[str]) -> Set[str]:
+def add_tags(path: Path, tags: list[str]) -> set[str]:
     """
     Add tags to a file. Duplicates are ignored.
 
@@ -190,7 +187,7 @@ def add_tags(path: Path, tags: List[str]) -> Set[str]:
     return current
 
 
-def remove_tags(path: Path, tags: List[str]) -> Set[str]:
+def remove_tags(path: Path, tags: list[str]) -> set[str]:
     """
     Remove tags from a file.
 
@@ -224,7 +221,7 @@ def clear_tags(path: Path) -> None:
     _remove_xattr(str(path))
 
 
-def set_tags(path: Path, tags: List[str]) -> Set[str]:
+def set_tags(path: Path, tags: list[str]) -> set[str]:
     """
     Replace all tags on a file with a new set.
 
@@ -245,12 +242,12 @@ def set_tags(path: Path, tags: List[str]) -> Set[str]:
 
 
 def find_by_tag(
-    search_paths: List[Path],
-    tags: List[str],
+    search_paths: list[Path],
+    tags: list[str],
     *,
     match_all: bool = False,
     recursive: bool = True,
-) -> List[Tuple[Path, Set[str]]]:
+) -> list[tuple[Path, set[str]]]:
     """
     Find files matching given tags.
 
@@ -266,7 +263,7 @@ def find_by_tag(
     """
     _check_xattr()
     validated = {validate_tag(t) for t in tags}
-    results: List[Tuple[Path, Set[str]]] = []
+    results: list[tuple[Path, set[str]]] = []
 
     for base_path in search_paths:
         if not base_path.exists():
@@ -276,7 +273,6 @@ def find_by_tag(
             if _matches(file_tags, validated, match_all):
                 results.append((base_path.resolve(), file_tags))
         elif base_path.is_dir():
-            method = os.walk if recursive else os.scandir
             if recursive:
                 for dirpath, _dirnames, filenames in os.walk(str(base_path)):
                     for fname in filenames:
@@ -303,7 +299,7 @@ def find_by_tag(
     return results
 
 
-def _matches(file_tags: Set[str], query_tags: Set[str], match_all: bool) -> bool:
+def _matches(file_tags: set[str], query_tags: set[str], match_all: bool) -> bool:
     """Check if file_tags match query_tags based on match_all flag."""
     if not file_tags or not query_tags:
         return False
@@ -312,7 +308,7 @@ def _matches(file_tags: Set[str], query_tags: Set[str], match_all: bool) -> bool
     return bool(query_tags & file_tags)
 
 
-def list_all_tags(search_paths: List[Path], recursive: bool = True) -> Dict[str, List[Path]]:
+def list_all_tags(search_paths: list[Path], recursive: bool = True) -> dict[str, list[Path]]:
     """
     List all tags found across files in the given paths.
 
@@ -323,7 +319,7 @@ def list_all_tags(search_paths: List[Path], recursive: bool = True) -> Dict[str,
     Returns:
         Dictionary mapping tag names to lists of file paths.
     """
-    tag_map: Dict[str, List[Path]] = {}
+    tag_map: dict[str, list[Path]] = {}
     for base_path in search_paths:
         if not base_path.exists():
             continue
@@ -350,7 +346,7 @@ def list_all_tags(search_paths: List[Path], recursive: bool = True) -> Dict[str,
     return tag_map
 
 
-def _accumulate_tags(fpath: Path, tag_map: Dict[str, List[Path]]) -> None:
+def _accumulate_tags(fpath: Path, tag_map: dict[str, list[Path]]) -> None:
     """Add a file's tags to the tag map."""
     tags = get_tags(fpath)
     for t in tags:
@@ -359,7 +355,7 @@ def _accumulate_tags(fpath: Path, tag_map: Dict[str, List[Path]]) -> None:
         tag_map[t].append(fpath.resolve())
 
 
-def export_tags(search_paths: List[Path], recursive: bool = True) -> Dict[str, List[str]]:
+def export_tags(search_paths: list[Path], recursive: bool = True) -> dict[str, list[str]]:
     """
     Export all file-tag mappings as a dictionary.
 
@@ -370,7 +366,7 @@ def export_tags(search_paths: List[Path], recursive: bool = True) -> Dict[str, L
     Returns:
         Dictionary mapping file paths (as strings) to lists of tag names.
     """
-    result: Dict[str, List[str]] = {}
+    result: dict[str, list[str]] = {}
     for base_path in search_paths:
         if not base_path.exists():
             continue
@@ -397,14 +393,14 @@ def export_tags(search_paths: List[Path], recursive: bool = True) -> Dict[str, L
     return result
 
 
-def _export_file(fpath: Path, result: Dict[str, List[str]]) -> None:
+def _export_file(fpath: Path, result: dict[str, list[str]]) -> None:
     """Add a file's tags to the export dict."""
     tags = get_tags(fpath)
     if tags:
         result[str(fpath.resolve())] = sorted(tags)
 
 
-def import_tags(data: Dict[str, List[str]]) -> Tuple[int, int]:
+def import_tags(data: dict[str, list[str]]) -> tuple[int, int]:
     """
     Import file-tag mappings from a dictionary.
 
@@ -429,7 +425,7 @@ def import_tags(data: Dict[str, List[str]]) -> Tuple[int, int]:
     return success, errors
 
 
-def get_stats(search_paths: List[Path], recursive: bool = True) -> Dict:
+def get_stats(search_paths: list[Path], recursive: bool = True) -> dict:
     """
     Get statistics about tagged files.
 
@@ -442,7 +438,7 @@ def get_stats(search_paths: List[Path], recursive: bool = True) -> Dict:
     """
     total_files = 0
     tagged_files = 0
-    tag_counts: Dict[str, int] = {}
+    tag_counts: dict[str, int] = {}
 
     for base_path in search_paths:
         if not base_path.exists():
@@ -494,7 +490,7 @@ def _has_tags(fpath: Path) -> bool:
     return raw is not None and raw.strip() != ""
 
 
-def _count_tags(fpath: Path, tag_counts: Dict[str, int], _tagged_files: int) -> None:
+def _count_tags(fpath: Path, tag_counts: dict[str, int], _tagged_files: int) -> None:
     """Count tags in a file for stats."""
     raw = _read_tags_raw(str(fpath))
     if raw:

@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "CLI tool for tagging files using filesystem extended attributes"
 readme = "README.md"
 license = {text = "MIT"}
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 keywords = ["cli", "file-tagging", "xattr", "extended-attributes", "organization"]
 authors = [
     {name = "EdgarOrtegaRamirez", email = "edgar@example.com"}
@@ -22,7 +22,6 @@ classifiers = [
     "Operating System :: POSIX :: Linux",
     "Operating System :: MacOS :: MacOS X",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -76,14 +75,13 @@ show_missing = true
 fail_under = 70
 
 [tool.ruff]
-target-version = "py39"
+target-version = "py310"
 line-length = 100
-extend-select = ["I"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP"]
 
 [tool.mypy]
 strict = true
-python_version = "3.9"
+python_version = "3.10"
 ignore_missing_imports = true

@@ -19,14 +19,11 @@ import json
 import os
 import sys
 from pathlib import Path
-from typing import List, Optional
 
 import click
 
 from filetag import __version__
 from filetag.core import (
-    XAttrNotAvailableError,
-    XAttrNotSupportedError,
     add_tags,
     clear_tags,
     export_tags,
@@ -36,7 +33,6 @@ from filetag.core import (
     import_tags,
     list_all_tags,
     remove_tags,
-    set_tags,
 )
 
 
@@ -48,7 +44,7 @@ def _print_tags(tags, prefix=""):
         click.echo(f"{prefix}{', '.join(sorted(tags))}")
 
 
-def _resolve_paths(paths: List[str]) -> List[Path]:
+def _resolve_paths(paths: list[str]) -> list[Path]:
     """Resolve path strings to Path objects, expanding ~."""
     result = []
     for p in paths:
@@ -84,13 +80,15 @@ def main(debug: bool) -> None:
     """
     if debug:
         import logging
+
         logging.basicConfig(level=logging.DEBUG)
 
 
 @main.command()
 @click.argument("paths", nargs=-1, required=True, type=click.Path(exists=True))
 @click.option(
-    "--tag", "-t",
+    "--tag",
+    "-t",
     "tags",
     multiple=True,
     required=True,
@@ -119,7 +117,8 @@ def add(paths, tags):
 @main.command()
 @click.argument("paths", nargs=-1, required=True, type=click.Path(exists=True))
 @click.option(
-    "--tag", "-t",
+    "--tag",
+    "-t",
     "tags",
     multiple=True,
     required=True,
@@ -206,7 +205,8 @@ def clear(paths):
 @main.command()
 @click.argument("tags", nargs=-1, required=True)
 @click.option(
-    "--path", "-p",
+    "--path",
+    "-p",
     "search_paths",
     multiple=True,
     default=["."],
@@ -273,7 +273,8 @@ def find(tags, search_paths, match_all, no_recursive, json_output):
 
 @main.command()
 @click.option(
-    "--path", "-p",
+    "--path",
+    "-p",
     "search_paths",
     multiple=True,
     default=["."],
@@ -324,7 +325,8 @@ def show(search_paths, no_recursive, json_output):
 
 @main.command()
 @click.option(
-    "--path", "-p",
+    "--path",
+    "-p",
     "search_paths",
     multiple=True,
     default=["."],
@@ -374,7 +376,8 @@ def stats(search_paths, no_recursive, json_output):
 
 @main.command()
 @click.option(
-    "--path", "-p",
+    "--path",
+    "-p",
     "search_paths",
     multiple=True,
     default=["."],
@@ -388,7 +391,8 @@ def stats(search_paths, no_recursive, json_output):
     help="Only scan the given directory, not subdirectories.",
 )
 @click.option(
-    "--output", "-o",
+    "--output",
+    "-o",
     "output_file",
     default=None,
     help="Write JSON output to file instead of stdout.",

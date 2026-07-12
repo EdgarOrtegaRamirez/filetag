@@ -18,7 +18,7 @@ import pytest
 from filetag.core import (
     TAG_SEPARATOR,
     XATTR_KEY,
-    FileNotFoundError_,
+    FileTagNotFoundError,
     TagValidationError,
     XAttrNotAvailableError,
     XAttrNotSupportedError,
@@ -355,7 +355,7 @@ class TestErrorHandling:
     def test_file_not_found(self, temp_files):
         base, files = temp_files
         nonexistent = base / "nonexistent.txt"
-        with pytest.raises(FileNotFoundError_):
+        with pytest.raises(FileTagNotFoundError):
             get_tags(nonexistent)
 
     def test_invalid_tag_on_add(self, mock_xattr, temp_files):
